@@ -22,35 +22,12 @@ jobs:
         run: |
           FILE=$(find . -name "build.gradle.kts" -not -path "*/.git/*" | head -1)
           if [ -z "$FILE" ]; then
-            echo "::error::Khong tim thay build.gradle.kts o dau trong repo ca. Gui ảnh cau truc repo cho tro ly."
+            echo "::error::Khong tim thay build.gradle.kts o dau trong repo ca. Gui anh cau truc repo cho tro ly."
             exit 1
           fi
           DIR=$(dirname "$FILE")
           echo "root=$DIR" >> "$GITHUB_OUTPUT"
           echo "Tim thay build.gradle.kts tai: $DIR"
-
-      - name: Tim phien ban Paper API cho 26.3
-        id: paperver
-        run: |
-          UA="coit-plugin-build/1.0 (github actions)"
-          META=$(curl -s -H "User-Agent: $UA" "https://fill.papermc.io/v3/projects/paper")
-          echo "$META"
-          HAS=$(echo "$META" | grep -o '"26\.3[^"]*"' | head -1 | tr -d '"')
-          if [ -z "$HAS" ]; then
-            echo "::error::Chua tim thay phien ban Paper cho 26.3 trong danh sach tren (fill.papermc.io/v3/projects/paper). Gui noi dung tren cho tro ly de chinh."
-            exit 1
-          fi
-          BUILDS=$(curl -s -H "User-Agent: $UA" "https://fill.papermc.io/v3/projects/paper/versions/$HAS/builds")
-          LATEST=$(echo "$BUILDS" | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
-          echo "version=$HAS" >> "$GITHUB_OUTPUT"
-          echo "build=$LATEST" >> "$GITHUB_OUTPUT"
-          echo "Dung Paper $HAS build $LATEST"
-
-      - name: Ghi phien ban vao build.gradle.kts
-        run: |
-          ROOT="${{ steps.findroot.outputs.root }}"
-          sed -i "s/__PAPER_API_VERSION__/${{ steps.paperver.outputs.version }}-R0.1-SNAPSHOT/" "$ROOT/build.gradle.kts"
-          cat "$ROOT/build.gradle.kts"
 
       - name: Build
         run: |
@@ -61,8 +38,8 @@ jobs:
           unzip -q /tmp/gradle.zip -d /tmp
           /tmp/gradle-$gradle_version/bin/gradle build --no-daemon --stacktrace > /tmp/build.log 2>&1 || {
             grep -E "\.java:[0-9]+: error" /tmp/build.log | sed 's/^/::error::/'
-            grep -A4 "What went wrong" /tmp/build.log | head -12 | sed 's/^/::error::/'
-            tail -n 40 /tmp/build.log
+            grep -A6 "What went wrong" /tmp/build.log | head -15 | sed 's/^/::error::/'
+            tail -n 50 /tmp/build.log
             exit 1
           }
           tail -n 40 /tmp/build.log
