@@ -20,15 +20,16 @@ jobs:
       - name: Tim phien ban Paper API cho 26.3
         id: paperver
         run: |
-          META=$(curl -s "https://api.papermc.io/v2/projects/paper")
+          UA="coit-plugin-build/1.0 (github actions)"
+          META=$(curl -s -H "User-Agent: $UA" "https://fill.papermc.io/v3/projects/paper")
           echo "$META"
           HAS=$(echo "$META" | grep -o '"26\.3[^"]*"' | head -1 | tr -d '"')
           if [ -z "$HAS" ]; then
-            echo "::error::Chua tim thay phien ban Paper cho 26.3 trong danh sach tren. Gui noi dung tren cho tro ly de chinh."
+            echo "::error::Chua tim thay phien ban Paper cho 26.3 trong danh sach tren (fill.papermc.io/v3/projects/paper). Gui noi dung tren cho tro ly de chinh."
             exit 1
           fi
-          BUILDS=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/$HAS/builds")
-          LATEST=$(echo "$BUILDS" | grep -o '"build":[0-9]*' | tail -1 | grep -o '[0-9]*')
+          BUILDS=$(curl -s -H "User-Agent: $UA" "https://fill.papermc.io/v3/projects/paper/versions/$HAS/builds")
+          LATEST=$(echo "$BUILDS" | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
           echo "version=$HAS" >> "$GITHUB_OUTPUT"
           echo "build=$LATEST" >> "$GITHUB_OUTPUT"
           echo "Dung Paper $HAS build $LATEST"
