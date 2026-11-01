@@ -1,0 +1,70 @@
+name: build
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Tim phien ban Paper API cho 26.3
+        id: paperver
+        run: |
+          META=$(curl -s "https://api.papermc.io/v2/projects/paper")
+          echo "$META"
+          HAS=$(echo "$META" | grep -o '"26\.3[^"]*"' | head -1 | tr -d '"')
+          if [ -z "$HAS" ]; then
+            echo "::error::Chua tim thay phien ban Paper cho 26.3 trong danh sach tren. Gui noi dung tren cho tro ly de chinh."
+            exit 1
+          fi
+          BUILDS=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/$HAS/builds")
+          LATEST=$(echo "$BUILDS" | grep -o '"build":[0-9]*' | tail -1 | grep -o '[0-9]*')
+          echo "version=$HAS" >> "$GITHUB_OUTPUT"
+          echo "build=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Dung Paper $HAS build $LATEST"
+
+      - name: Ghi phien ban vao build.gradle.kts
+        run: |
+          sed -i "s/__PAPER_API_VERSION__/${{ steps.paperver.outputs.version }}-R0.1-SNAPSHOT/" build.gradle.kts
+          cat build.gradle.kts
+
+      - name: Build
+        run: |
+          gradle_version="8.10"
+          curl -sL "https://services.gradle.org/distributions/gradle-$gradle_version-bin.zip" -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          /tmp/gradle-$gradle_version/bin/gradle build --no-daemon --stacktrace > /tmp/build.log 2>&1 || {
+            grep -E "\.java:[0-9]+: error" /tmp/build.log | sed 's/^/::error::/'
+            tail -n 40 /tmp/build.log
+            exit 1
+          }
+          tail -n 40 /tmp/build.log
+
+      - name: Gom file jar
+        run: |
+          mkdir -p dist
+          JAR=$(ls build/libs/*.jar | head -1)
+          cp "$JAR" dist/coit-26.3.jar
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coit-26.3
+          path: dist/*.jar
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: coit-build
+          name: Coit plugin 26.3 (ban moi nhat)
+          body: "File jar tu dong build cho Paper 26.3."
+          files: dist/*.jar
