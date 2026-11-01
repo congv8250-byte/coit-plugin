@@ -1,0 +1,13 @@
+name: Coit
+version: ${version}
+main: vn.mcfk.coit.CoitPlugin
+author: Nakasaki
+commands:
+  coit:
+    description: Nhan ban vat pham dang cam tren tay
+  guide:
+    description: Lenh admin cua Coit
+  coitrecipe:
+    description: Xem cong thuc vu khi Coit
+  coitupgrade:
+    description: Nang cap vu khi Coit dang cam tren tay
