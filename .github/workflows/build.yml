@@ -56,7 +56,7 @@ jobs:
         run: |
           ROOT="${{ steps.findroot.outputs.root }}"
           cd "$ROOT"
-          gradle_version="8.10"
+          gradle_version="9.1.0"
           curl -sL "https://services.gradle.org/distributions/gradle-$gradle_version-bin.zip" -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
           /tmp/gradle-$gradle_version/bin/gradle build --no-daemon --stacktrace > /tmp/build.log 2>&1 || {
