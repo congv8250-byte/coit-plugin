@@ -40,7 +40,7 @@ public final class ItemUtil {
         meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         AttributeModifier mod = new AttributeModifier(keyDamage, level * 2.0, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.HAND);
-        meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, mod);
+        meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, mod);
         if (w.skill == SkillType.UNBREAKABLE) meta.setUnbreakable(true);
         item.setItemMeta(meta);
         return item;
