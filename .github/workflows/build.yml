@@ -17,6 +17,18 @@ jobs:
           distribution: temurin
           java-version: 25
 
+      - name: Tim thu muc chua build.gradle.kts
+        id: findroot
+        run: |
+          FILE=$(find . -name "build.gradle.kts" -not -path "*/.git/*" | head -1)
+          if [ -z "$FILE" ]; then
+            echo "::error::Khong tim thay build.gradle.kts o dau trong repo ca. Gui ảnh cau truc repo cho tro ly."
+            exit 1
+          fi
+          DIR=$(dirname "$FILE")
+          echo "root=$DIR" >> "$GITHUB_OUTPUT"
+          echo "Tim thay build.gradle.kts tai: $DIR"
+
       - name: Tim phien ban Paper API cho 26.3
         id: paperver
         run: |
@@ -36,16 +48,20 @@ jobs:
 
       - name: Ghi phien ban vao build.gradle.kts
         run: |
-          sed -i "s/__PAPER_API_VERSION__/${{ steps.paperver.outputs.version }}-R0.1-SNAPSHOT/" build.gradle.kts
-          cat build.gradle.kts
+          ROOT="${{ steps.findroot.outputs.root }}"
+          sed -i "s/__PAPER_API_VERSION__/${{ steps.paperver.outputs.version }}-R0.1-SNAPSHOT/" "$ROOT/build.gradle.kts"
+          cat "$ROOT/build.gradle.kts"
 
       - name: Build
         run: |
+          ROOT="${{ steps.findroot.outputs.root }}"
+          cd "$ROOT"
           gradle_version="8.10"
           curl -sL "https://services.gradle.org/distributions/gradle-$gradle_version-bin.zip" -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
           /tmp/gradle-$gradle_version/bin/gradle build --no-daemon --stacktrace > /tmp/build.log 2>&1 || {
             grep -E "\.java:[0-9]+: error" /tmp/build.log | sed 's/^/::error::/'
+            grep -A4 "What went wrong" /tmp/build.log | head -12 | sed 's/^/::error::/'
             tail -n 40 /tmp/build.log
             exit 1
           }
@@ -53,8 +69,9 @@ jobs:
 
       - name: Gom file jar
         run: |
+          ROOT="${{ steps.findroot.outputs.root }}"
           mkdir -p dist
-          JAR=$(ls build/libs/*.jar | head -1)
+          JAR=$(ls "$ROOT"/build/libs/*.jar | head -1)
           cp "$JAR" dist/coit-26.3.jar
           ls -l dist
 
